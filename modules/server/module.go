@@ -5,11 +5,15 @@ import (
 	middlewaresrepositories "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresRepositories"
 	middlewaresusecases "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresUsecases"
 	monitorhandlers "github.com/WhoaWicked/board-game-shop/modules/monitor/monitorHandlers"
+	usershandlers "github.com/WhoaWicked/board-game-shop/modules/users/usersHandlers"
+	usersrepositories "github.com/WhoaWicked/board-game-shop/modules/users/usersRepositories"
+	usersusecases "github.com/WhoaWicked/board-game-shop/modules/users/usersUsecases"
 	"github.com/gofiber/fiber/v3"
 )
 
 type IModuleFactory interface {
 	MonitorModule()
+	UsersModule()
 }
 
 type moduleFactory struct {
@@ -36,4 +40,13 @@ func InitMiddlewares(s *server) middlewareshandlers.IMiddlewaresHandler {
 func (m *moduleFactory) MonitorModule() {
 	handler := monitorhandlers.MoniterHandler(m.s.cfg)
 	m.r.Get("/", handler.HealthCheck)
+}
+
+func (m *moduleFactory) UsersModule() {
+	repository := usersrepositories.UsersRepository(m.s.db)
+	usecase := usersusecases.UsersUsecase(m.s.cfg, repository)
+	handler := usershandlers.UsersHandler(m.s.cfg, usecase)
+	router := m.r.Group("/users")
+	router.Post("/signup", handler.InsertCustomer)
+	router.Post("/signup-admin", handler.InsertAdmin)
 }
