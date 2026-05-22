@@ -20,6 +20,19 @@ type UserRegisterReq struct {
 	Password string `db:"password" json:"password" form:"password"`
 }
 
+type UserCredential struct {
+	Email    string `db:"email" json:"email" form:"email"`
+	Password string `db:"password" json:"password" form:"password"`
+}
+
+type UserCredentialCheck struct {
+	Id       string `db:"id"`
+	Email    string `db:"email"`
+	Password string `db:"password"`
+	Username string `db:"username"`
+	Role_id  int    `db:"role_id"`
+}
+
 func (obj *UserRegisterReq) IsEmail() bool {
 	match, err := regexp.MatchString(`^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`, obj.Email)
 	if err != nil {
