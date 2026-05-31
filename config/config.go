@@ -82,14 +82,14 @@ func LoadConfig(path string) IConfig {
 			secretKey: envMap["JWT_SECRET_KEY"],
 			staffKey:  envMap["JWT_STAFF_KEY"],
 			adminKey:  envMap["JWT_ADMIN_KEY"],
-			accessTokenExpiresAt: func() int {
+			accessExpiresAt: func() int {
 				t, err := strconv.Atoi(envMap["JWT_ACCESS_EXPIRES"])
 				if err != nil {
 					log.Fatalf("load access expires at failed: %v", err)
 				}
 				return t
 			}(),
-			refreshTokenExpiresAt: func() int {
+			refreshExpiresAt: func() int {
 				t, err := strconv.Atoi(envMap["JWT_REFRESH_EXPIRES"])
 				if err != nil {
 					log.Fatalf("load refresh expires at failed: %v", err)
@@ -185,18 +185,18 @@ type IJwtConfig interface {
 	SecretKey() []byte
 	StaffKey() []byte
 	AdminKey() []byte
-	AccessTokenExpiresAt() int
-	RefreshTokenExpiresAt() int
+	AccessExpiresAt() int
+	RefreshExpiresAt() int
 	SetAccessTokenExpires(t int)
 	SetRefreshTokenExpires(t int)
 }
 
 type jwt struct {
-	secretKey             string
-	staffKey              string
-	adminKey              string
-	accessTokenExpiresAt  int // sec
-	refreshTokenExpiresAt int // sec
+	secretKey        string
+	staffKey         string
+	adminKey         string
+	accessExpiresAt  int // sec
+	refreshExpiresAt int // sec
 }
 
 func (c *config) Jwt() IJwtConfig {
@@ -206,7 +206,7 @@ func (c *config) Jwt() IJwtConfig {
 func (j *jwt) SecretKey() []byte            { return []byte(j.secretKey) }
 func (j *jwt) StaffKey() []byte             { return []byte(j.staffKey) }
 func (j *jwt) AdminKey() []byte             { return []byte(j.adminKey) }
-func (j *jwt) AccessTokenExpiresAt() int    { return j.accessTokenExpiresAt }
-func (j *jwt) RefreshTokenExpiresAt() int   { return j.refreshTokenExpiresAt }
-func (j *jwt) SetAccessTokenExpires(t int)  { j.accessTokenExpiresAt = t }
-func (j *jwt) SetRefreshTokenExpires(t int) { j.refreshTokenExpiresAt = t }
+func (j *jwt) AccessExpiresAt() int         { return j.accessExpiresAt }
+func (j *jwt) RefreshExpiresAt() int        { return j.refreshExpiresAt }
+func (j *jwt) SetAccessTokenExpires(t int)  { j.accessExpiresAt = t }
+func (j *jwt) SetRefreshTokenExpires(t int) { j.refreshExpiresAt = t }

@@ -3,6 +3,7 @@ package middlewaresusecases
 import middlewaresrepositories "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresRepositories"
 
 type IMiddlewaresUsecase interface {
+	FindAccessToken(userId string, accessToken string) bool
 }
 
 type middlewaresUsecase struct {
@@ -13,4 +14,8 @@ func MiddlewaresUsecase(middlewaresRepository middlewaresrepositories.IMiddlewar
 	return &middlewaresUsecase{
 		middlewaresRepository: middlewaresRepository,
 	}
+}
+
+func (u *middlewaresUsecase) FindAccessToken(userId, accessToken string) bool {
+	return u.middlewaresRepository.FindAccessToken(userId, accessToken)
 }
