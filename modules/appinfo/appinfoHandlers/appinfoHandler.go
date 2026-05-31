@@ -19,6 +19,7 @@ const (
 	findCategoriesErr appinfoHandlersErrCode = "appinfo-002"
 	addCategoryErr    appinfoHandlersErrCode = "appinfo-003"
 	removeCategoryErr appinfoHandlersErrCode = "appinfo-004"
+	updateCategoryErr appinfoHandlersErrCode = "appinfo-005"
 )
 
 type IAppinfoHandler interface {
@@ -26,6 +27,7 @@ type IAppinfoHandler interface {
 	FindCategories(c fiber.Ctx) error
 	AddCategory(c fiber.Ctx) error
 	RemoveCategory(c fiber.Ctx) error
+	UpdateCategory(c fiber.Ctx) error
 }
 
 type appinfoHandler struct {
@@ -131,4 +133,46 @@ func (h *appinfoHandler) RemoveCategory(c fiber.Ctx) error {
 			CategoryId: categoryIdInt,
 		},
 	).Res()
+}
+
+func (h *appinfoHandler) UpdateCategory(c fiber.Ctx) error {
+	categoryIdInt, err := strconv.Atoi(strings.Trim(c.Params("category_id"), " "))
+	if err != nil {
+		return entities.NewResponse(c).Error(
+			fiber.ErrBadRequest.Code,
+			string(updateCategoryErr),
+			"id type is invalid",
+		).Res()
+	}
+	req := new(appinfo.Category)
+	if err := c.Bind().Body(req); err != nil {
+		return entities.NewResponse(c).Error(
+			fiber.ErrBadRequest.Code,
+			string(updateCategoryErr),
+			err.Error(),
+		).Res()
+	}
+	req.Id = categoryIdInt
+	if req.Id <= 0 {
+		return entities.NewResponse(c).Error(
+			fiber.ErrBadRequest.Code,
+			string(updateCategoryErr),
+			"id must more than 0",
+		).Res()
+	}
+	if req.Title == "" {
+		return entities.NewResponse(c).Error(
+			fiber.ErrBadRequest.Code,
+			string(updateCategoryErr),
+			"title is empty",
+		).Res()
+	}
+	if err := h.appinfoUsecase.UpdateCategory(req); err != nil {
+		return entities.NewResponse(c).Error(
+			fiber.ErrInternalServerError.Code,
+			string(removeCategoryErr),
+			err.Error(),
+		).Res()
+	}
+	return entities.NewResponse(c).Success(fiber.StatusOK, req).Res()
 }

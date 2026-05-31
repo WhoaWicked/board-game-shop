@@ -13,6 +13,7 @@ type IAppinfoRepository interface {
 	FindCategories(req *appinfo.CategoryFilter) ([]*appinfo.Category, error)
 	InsertCategory(req []*appinfo.Category) error
 	DeleteCategory(categoryId int) error
+	UpdateCategory(req *appinfo.Category) error
 }
 
 type appinfoRepository struct {
@@ -73,6 +74,22 @@ func (r *appinfoRepository) InsertCategory(req []*appinfo.Category) error {
 	}
 	if err := tx.Commit(); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (r *appinfoRepository) UpdateCategory(req *appinfo.Category) error {
+	query := `UPDATE categories SET title = $1 WHERE id = $2;`
+	result, err := r.db.ExecContext(context.Background(), query, req.Title, req.Id)
+	if err != nil {
+		return fmt.Errorf("update category failed: %v", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("check rows affected failed: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("category id %d not found", req.Id)
 	}
 	return nil
 }
