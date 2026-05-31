@@ -20,7 +20,6 @@ DROP INDEX IF EXISTS idx_bookings_start_time;
 DROP INDEX IF EXISTS idx_game_images_game_id;
 
 -- Drop tables
-DROP TABLE IF EXISTS penalties;
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS booking_rates;
 DROP TABLE IF EXISTS booking_games;
@@ -38,6 +37,7 @@ DROP TABLE IF EXISTS roles;
 DROP TYPE IF EXISTS payment_status;
 DROP TYPE IF EXISTS booking_status;
 DROP TYPE IF EXISTS game_status;
+DROP TYPE IF EXISTS table_status;
 
 -- Drop function
 DROP FUNCTION IF EXISTS set_updated_at_column;

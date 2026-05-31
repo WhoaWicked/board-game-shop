@@ -20,6 +20,13 @@ END;
 $$ language 'plpgsql';
 
 -- Create enum
+CREATE TYPE "table_status" AS ENUM (
+    'available',
+    'occupied',
+    'maintenance',
+    'hidden'
+);
+
 CREATE TYPE "game_status" AS ENUM (
     'available',
     'borrowed',
@@ -70,8 +77,10 @@ CREATE TABLE "board_tables" (
   "id" SERIAL PRIMARY KEY,
   "table_number" VARCHAR UNIQUE NOT NULL,
   "seat_capacity" INT NOT NULL,
+  "status" table_status NOT NULL DEFAULT 'available',
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
+  CONSTRAINT "chk_seat_capacity" CHECK ("seat_capacity" > 0)
 );
 
 CREATE TABLE "games" (
@@ -100,7 +109,8 @@ CREATE TABLE "categories" (
 CREATE TABLE "games_categories" (
   "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
   "game_id" VARCHAR NOT NULL,
-  "category_id" INT NOT NULL
+  "category_id" INT NOT NULL,
+  CONSTRAINT "unique_game_category" UNIQUE ("game_id", "category_id")
 );
 
 CREATE TABLE "bookings" (
@@ -114,29 +124,35 @@ CREATE TABLE "bookings" (
   "actual_end_time" TIMESTAMP,
   "status" booking_status NOT NULL DEFAULT 'booked',
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
+  CONSTRAINT "chk_booking_time" CHECK ("end_time" > "start_time"),
+  CONSTRAINT "chk_total_players" CHECK ("total_players" > 0)
 );
 
 CREATE TABLE "booking_games" (
   "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
   "booking_id" VARCHAR NOT NULL,
-  "game_id" VARCHAR NOT NULL
+  "game_id" VARCHAR NOT NULL,
+  CONSTRAINT "unique_booking_game" UNIQUE ("booking_id", "game_id")
 );
 
 CREATE TABLE "booking_rates" (
   "id" SERIAL PRIMARY KEY,
   "min_hours" INT NOT NULL,
   "max_hours" INT NOT NULL,
-  "price_per_hour" decimal NOT NULL
+  "price_per_hour" DECIMAL(10,2) NOT NULL,
+  CONSTRAINT chk_booking_rate_hour CHECK (
+  min_hours > 0
+  AND max_hours >= min_hours )
 );
 
 CREATE TABLE "payments" (
   "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
   "booking_id" VARCHAR UNIQUE NOT NULL,
-  "total_hours_price" decimal NOT NULL,
-  "total_penalty_price" decimal,
-  "grand_total" decimal NOT NULL,
-  "rate_applied_per_hour" decimal NOT NULL,
+  "total_hours_price" DECIMAL(10,2) NOT NULL,
+  "total_penalty_price" DECIMAL(10,2) NOT NULL DEFAULT 0,
+  "grand_total" DECIMAL(10,2) NOT NULL,
+  "rate_applied_per_hour" DECIMAL(10,2) NOT NULL,
   "status" payment_status NOT NULL DEFAULT 'pending',
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
   "updated_at" TIMESTAMP NOT NULL DEFAULT now()
