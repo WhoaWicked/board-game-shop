@@ -16,6 +16,7 @@ const (
 	Access  TokenType = "access"
 	Refresh TokenType = "refresh"
 	Admin   TokenType = "admin"
+	ApiKey  TokenType = "apikey"
 )
 
 type shopAuth struct {
@@ -32,11 +33,19 @@ type shopAdmin struct {
 	*shopAuth
 }
 
+type shopApiKey struct {
+	*shopAuth
+}
+
 type IShopAuth interface {
 	SignToken() string
 }
 
 // type IShopAdmin interface {
+// 	SignToken() string
+// }
+
+// type IShopApiKey interface {
 // 	SignToken() string
 // }
 
@@ -50,6 +59,13 @@ func (a *shopAdmin) SignToken() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
 	ss, _ := token.SignedString(a.cfg.AdminKey())
 	return ss
+}
+
+func (a *shopApiKey) SignToken() string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
+	ss, _ := token.SignedString(a.cfg.ApiKey())
+	return ss
+
 }
 
 func jwtTimeDurationCal(t int) *jwt.NumericDate {
@@ -109,6 +125,29 @@ func ParseAdmin(cfg config.IJwtConfig, tokenString string) (*shopMapClaims, erro
 
 }
 
+func ParseApiKey(cfg config.IJwtConfig, tokenString string) (*shopMapClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &shopMapClaims{}, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("signin method is invalid")
+		}
+		return cfg.ApiKey(), nil
+	})
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenMalformed) {
+			return nil, fmt.Errorf("token format is invalid")
+		} else if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, fmt.Errorf("token had expired")
+		} else {
+			return nil, fmt.Errorf("parse token failed: %v", err)
+		}
+	}
+	if claims, ok := token.Claims.(*shopMapClaims); ok {
+		return claims, nil
+	} else {
+		return nil, fmt.Errorf("claims type is invalid: %v", err)
+	}
+}
+
 func RepeatToken(cfg config.IJwtConfig, claims *users.UserClaims, exp int64) string {
 	obj := &shopAuth{
 		cfg: cfg,
@@ -135,7 +174,8 @@ func NewShopAuth(tokenType TokenType, cfg config.IJwtConfig, claims *users.UserC
 		return newRefreshToken(cfg, claims), nil
 	case Admin:
 		return newAdminToken(cfg), nil
-
+	case ApiKey:
+		return newApiKey(cfg), nil
 	default:
 		return nil, fmt.Errorf("unknow token type")
 	}
@@ -186,6 +226,25 @@ func newAdminToken(cfg config.IJwtConfig) IShopAuth {
 					Subject:   "admin-token",
 					Audience:  []string{"admin"},
 					ExpiresAt: jwtTimeDurationCal(300),
+					NotBefore: jwt.NewNumericDate(time.Now()),
+					IssuedAt:  jwt.NewNumericDate(time.Now()),
+				},
+			},
+		},
+	}
+}
+
+func newApiKey(cfg config.IJwtConfig) IShopAuth {
+	return &shopApiKey{
+		shopAuth: &shopAuth{
+			cfg: cfg,
+			mapClaims: &shopMapClaims{
+				Claims: nil,
+				RegisteredClaims: jwt.RegisteredClaims{
+					Issuer:    "boardgameshop-api",
+					Subject:   "api-key",
+					Audience:  []string{"customer", "staff", "admin"},
+					ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(2, 0, 0)),
 					NotBefore: jwt.NewNumericDate(time.Now()),
 					IssuedAt:  jwt.NewNumericDate(time.Now()),
 				},
