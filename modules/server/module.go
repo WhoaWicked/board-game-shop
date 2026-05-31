@@ -1,6 +1,9 @@
 package server
 
 import (
+	appinfohandlers "github.com/WhoaWicked/board-game-shop/modules/appinfo/appinfoHandlers"
+	appinforepositories "github.com/WhoaWicked/board-game-shop/modules/appinfo/appinfoRepositories"
+	appinfousecases "github.com/WhoaWicked/board-game-shop/modules/appinfo/appinfoUsecases"
 	middlewareshandlers "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresHandlers"
 	middlewaresrepositories "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresRepositories"
 	middlewaresusecases "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresUsecases"
@@ -14,6 +17,7 @@ import (
 type IModuleFactory interface {
 	MonitorModule()
 	UsersModule()
+	AppinfoModule()
 }
 
 type moduleFactory struct {
@@ -49,9 +53,17 @@ func (m *moduleFactory) UsersModule() {
 	router := m.r.Group("/users")
 	router.Post("/signup", handler.InsertCustomer)
 	router.Post("/signup-admin", handler.InsertAdmin)
-	router.Post("/signin", handler.SignIn)
+	router.Post("/signin", m.mid.ApiKeyAuth(), handler.SignIn)
 	router.Post("/refresh", handler.RefreshPassport)
 	router.Post("/signout", handler.SignOut)
 	router.Get("/admin/secret", m.mid.JwtAuth(), m.mid.Authorize(4), handler.GenerateAdminToken)
 	router.Get("/:user_id", m.mid.JwtAuth(), m.mid.ParamsCheck(), handler.GetUserProfile)
+}
+
+func (m *moduleFactory) AppinfoModule() {
+	repository := appinforepositories.AppinfoRepository(m.s.db)
+	usecase := appinfousecases.AppinfoUsecase(repository)
+	handler := appinfohandlers.AppinfoHandler(m.s.cfg, usecase)
+	router := m.r.Group("/appinfo")
+	router.Get("/apikey", m.mid.JwtAuth(), m.mid.Authorize(4), handler.GenerateApiKey)
 }
