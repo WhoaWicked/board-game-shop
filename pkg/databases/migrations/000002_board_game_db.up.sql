@@ -42,12 +42,12 @@ INSERT INTO "categories" ("title") VALUES
 
 
 -- ==========================================
--- 5. INSERT GAMES (ปล่อยรัน ID ออโต้เป็น G000001, G000002, ...)
+-- 5. INSERT GAMES (🔥 แก้ไขเพิ่มข้อมูลผู้เล่นและเวลาลง Seed Data)
 -- ==========================================
-INSERT INTO "games" ("title", "description", "status") VALUES 
-('Catan', 'Settlers of Catan - ค้าขาย วางแผน สร้างเมือง', 'available'), -- ระบบรันให้เป็น G000001
-('Avalon', 'The Resistance: Avalon - เกมบลัฟฟ์จับกลุ่มคนทรยศ', 'available'), -- ระบบรันให้เป็น G000002
-('Dixit', 'เกมการ์ดคำใบ้จากภาพวาดสุดแฟนตาซี', 'available'); -- ระบบรันให้เป็น G000003
+INSERT INTO "games" ("title", "description", "min_players", "max_players", "playing_time", "status") VALUES 
+('Catan', 'Settlers of Catan - ค้าขาย วางแผน สร้างเมือง', 3, 4, 90, 'available'), -- ระบบรันให้เป็น G000001
+('Avalon', 'The Resistance: Avalon - เกมบลัฟฟ์จับกลุ่มคนทรยศ', 5, 10, 40, 'available'), -- ระบบรันให้เป็น G000002
+('Dixit', 'เกมการ์ดคำใบ้จากภาพวาดสุดแฟนตาซี', 3, 6, 30, 'available'); -- ระบบรันให้เป็น G000003
 
 
 -- ==========================================
@@ -82,9 +82,6 @@ INSERT INTO "booking_rates" ("min_hours", "max_hours", "price_per_hour") VALUES
 -- ==========================================
 -- 9. INSERT BOOKINGS (จำลองลูกค้า customer_ton จองโต๊ะ VIP01)
 -- ==========================================
--- ระบบรัน ID ออโต้เป็น B000001 โดยอิงตาม Foreign Key:
--- user_id = 'U000003' (customer_ton)
--- table_id = 4 (โต๊ะ VIP01)
 INSERT INTO "bookings"
 ("user_id", "table_id", "total_players", "start_time", "end_time", "status")
 VALUES
@@ -94,15 +91,12 @@ VALUES
 -- ==========================================
 -- 10. INSERT BOOKING_GAMES (จำลองว่าการจอง B000001 มีการยืมเกม Avalon ไปเล่น)
 -- ==========================================
--- booking_id = 'B000001'
--- game_id = 'G000002' (Avalon)
 INSERT INTO "booking_games" ("booking_id", "game_id") VALUES 
 ('B000001', 'G000002');
 
 -- ==========================================
 -- 11. INSERT PAYMENTS (บิลจ่ายเงิน อิงตามคอลัมน์เวอร์ชันใหม่)
 -- ==========================================
--- ผูกกับบิลจอง 'B000001': เล่น 3 ชั่วโมง (เรทชั่วโมงละ 40.00) = 120.00 บาท ยังไม่มีค่าปรับ
 INSERT INTO "payments" ("booking_id", "total_hours_price", "total_penalty_price", "grand_total", "rate_applied_per_hour", "status") VALUES 
 ('B000001', 120.00, 0.00, 120.00, 40.00, 'success');
 

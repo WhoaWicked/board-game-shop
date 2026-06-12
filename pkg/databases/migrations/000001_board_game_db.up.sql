@@ -83,13 +83,20 @@ CREATE TABLE "board_tables" (
   CONSTRAINT "chk_seat_capacity" CHECK ("seat_capacity" > 0)
 );
 
+-- ✨ แก้ไขเพิ่มคอลัมน์ในตาราง games
 CREATE TABLE "games" (
   "id" VARCHAR PRIMARY KEY DEFAULT CONCAT('G', LPAD(NEXTVAL('games_id_seq')::TEXT, 6, '0')),
   "title" VARCHAR UNIQUE NOT NULL,
   "description" VARCHAR,
+  "min_players" INT NOT NULL,          -- 🔥 จำนวนผู้เล่นขั้นต่ำ
+  "max_players" INT NOT NULL,          -- 🔥 จำนวนผู้เล่นสูงสุด
+  "playing_time" INT NOT NULL,         -- 🔥 ระยะเวลาเล่นเฉลี่ย (นาที)
   "status" game_status NOT NULL DEFAULT 'available',
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
+  -- 🔒 ดักข้อมูล: จำนวนผู้เล่นสูงสุดต้องไม่น้อยกว่าขั้นต่ำ และทุกค่าต้องมากกว่า 0
+  CONSTRAINT "chk_players_range" CHECK ("max_players" >= "min_players"),
+  CONSTRAINT "chk_positive_values" CHECK ("min_players" > 0 AND "playing_time" > 0)
 );
 
 CREATE TABLE "game_images" (

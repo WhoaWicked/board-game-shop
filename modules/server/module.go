@@ -4,6 +4,9 @@ import (
 	appinfohandlers "github.com/WhoaWicked/board-game-shop/modules/appinfo/appinfoHandlers"
 	appinforepositories "github.com/WhoaWicked/board-game-shop/modules/appinfo/appinfoRepositories"
 	appinfousecases "github.com/WhoaWicked/board-game-shop/modules/appinfo/appinfoUsecases"
+	gameshandlers "github.com/WhoaWicked/board-game-shop/modules/games/gamesHandlers"
+	gamesrepositories "github.com/WhoaWicked/board-game-shop/modules/games/gamesRepositories"
+	gamesusecases "github.com/WhoaWicked/board-game-shop/modules/games/gamesUsecases"
 	middlewareshandlers "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresHandlers"
 	middlewaresrepositories "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresRepositories"
 	middlewaresusecases "github.com/WhoaWicked/board-game-shop/modules/middlewares/middlewaresUsecases"
@@ -18,6 +21,7 @@ type IModuleFactory interface {
 	MonitorModule()
 	UsersModule()
 	AppinfoModule()
+	GamesModule()
 }
 
 type moduleFactory struct {
@@ -70,4 +74,16 @@ func (m *moduleFactory) AppinfoModule() {
 	router.Post("/categories", m.mid.JwtAuth(), m.mid.Authorize(4), handler.AddCategory)
 	router.Delete("/:category_id/categories", m.mid.JwtAuth(), m.mid.Authorize(4), handler.RemoveCategory)
 	router.Put("/:category_id/categories", m.mid.JwtAuth(), m.mid.Authorize(4), handler.UpdateCategory)
+}
+
+func (m *moduleFactory) GamesModule() {
+	repository := gamesrepositories.GamesRepository(m.s.db)
+	usecase := gamesusecases.GamesUsecase(repository)
+	handler := gameshandlers.GamesHandler(usecase)
+	router := m.r.Group("/games")
+	router.Get("/:game_id", m.mid.ApiKeyAuth(), handler.FindOneGame)
+	router.Get("/", m.mid.ApiKeyAuth(), handler.FindGames)
+	router.Post("/", m.mid.JwtAuth(), m.mid.Authorize(4), handler.AddGame)
+	router.Delete("/:game_id", m.mid.JwtAuth(), m.mid.Authorize(4), handler.DeleteGame)
+	router.Patch("/:game_id", m.mid.JwtAuth(), m.mid.Authorize(4), handler.UpdateGame)
 }
